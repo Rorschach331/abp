@@ -41,11 +41,16 @@
             <div class="col-lg-8 col-md-10 mx-auto pb-4">
                 <h1 class="mt-lg-4 mt-md-3">@Model.BlogPost.Title</h1>
                 <p class="mb-lg-5 mb-md-3">
-                    <span class="font-weight-bold">@@@Model.BlogPost.Author?.UserName</span>
+                    <a href="/blogs/@Model.BlogSlug?authorId=@Model.BlogPost.Author.Id">
+                        <span class="font-weight-bold">@@@Model.BlogPost.Author?.UserName</span>
+                    </a>
                     <small style="opacity:.65;">@Model.BlogPost.CreationTime</small>
                 </p>
 
-                @Html.Raw(await MarkdownRenderer.RenderAsync(Model.BlogPost.Content))
+                @if(!Model.BlogPost.Content.IsNullOrEmpty())
+                {
+                    @Html.Raw(await MarkdownRenderer.RenderAsync(Model.BlogPost.Content))
+                }
 
                 <p class="mb-3">
                     @if (Model.BlogPost.LastModificationTime != null)
@@ -69,7 +74,7 @@
             </div>
         </abp-row>
 
-        <abp-row class="form-row">
+        <abp-row class="row">
             <abp-column size-lg="_6" size-md="_12">
                 @if (GlobalFeatureManager.Instance.IsEnabled<ReactionsFeature>())
                 {
@@ -82,7 +87,6 @@
                         })
                     }
                 }
-
             </abp-column>
             <abp-column size-lg="_6" size-md="_12">
                 @if (GlobalFeatureManager.Instance.IsEnabled<RatingsFeature>())
@@ -96,13 +100,10 @@
                         })
                     }
                 }
-
             </abp-column>
         </abp-row>
     </abp-card-body>
 </abp-card>
-
-
 
 @if (GlobalFeatureManager.Instance.IsEnabled<CommentsFeature>())
 {

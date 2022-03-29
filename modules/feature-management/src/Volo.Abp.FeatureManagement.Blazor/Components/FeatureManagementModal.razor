@@ -15,7 +15,7 @@
             }
             else
             {
-                <Tabs TabPosition="TabPosition.Left" Pills="true" @bind-SelectedTab="@SelectedTabName">
+                <Tabs TabPosition="TabPosition.Start" Pills="true" @bind-SelectedTab="@SelectedTabName">
                     <Items>
                         @foreach (var group in Groups)
                         {
@@ -36,15 +36,14 @@
 
                                     if (feature.ValueType is FreeTextStringValueType)
                                     {
-                                        <Field>
+                                        <Field Style="@GetFeatureStyles(feature)">
                                             <FieldLabel>@feature.DisplayName</FieldLabel>
                                             <TextEdit Disabled="@disabled"
                                                       Text="@feature.Value"
-                                                      TextChanged="@(async(v) => await OnFeatureValueChangedAsync(v, feature))"
-                                                      Style="@GetFeatureStyles(feature)" />
+                                                      TextChanged="@(async(v) => await OnFeatureValueChangedAsync(v, feature))" />
                                             @if (feature.Description != null)
                                             {
-                                                <span>@feature.Description</span>
+                                                <div class="form-text">@feature.Description</div>
                                             }
                                         </Field>
                                     }
@@ -64,15 +63,23 @@
                                                     </SelectItem>
                                                 }
                                             </Select>
+                                            @if (feature.Description != null)
+                                            {
+                                                <div class="form-text">@feature.Description</div>
+                                            }
                                         </Field>
                                     }
 
                                     if (feature.ValueType is ToggleStringValueType)
                                     {
-                                        <Field>
+                                        <Field Style="@GetFeatureStyles(feature)" >
                                             <Check
-                                                TValue="bool" Checked="@ToggleValues[feature.Name]" CheckedChanged="@(async(v) => await OnSelectedValueChangedAsync(v, feature))" Style="@GetFeatureStyles(feature)">@feature.DisplayName</Check>
+                                                TValue="bool" Checked="@ToggleValues[feature.Name]" CheckedChanged="@(async(v) => await OnSelectedValueChangedAsync(v, feature))">@feature.DisplayName</Check>
                                         </Field>
+                                        @if (feature.Description != null)
+                                        {
+                                            <div class="form-text">@feature.Description</div>
+                                        }
                                     }
                                 }
 

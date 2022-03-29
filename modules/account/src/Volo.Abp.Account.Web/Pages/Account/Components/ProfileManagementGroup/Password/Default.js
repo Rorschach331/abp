@@ -23,8 +23,9 @@
                 return;
             }
 
-            volo.abp.identity.profile.changePassword(input).then(function (result) {
+            volo.abp.account.profile.changePassword(input).then(function (result) {
                 abp.message.success(l('PasswordChanged'));
+                abp.event.trigger('passwordChanged');
             });
         });
     });

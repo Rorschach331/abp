@@ -56,6 +56,10 @@
                                                            group-data-feature-name="@feature.Name"
                                                            group-data-parent-name="@(feature.ParentName ?? "")"
                                                            group-style="margin-left: @(feature.Depth * 20)px"/>
+                                                @if (feature.Description != null)
+                                                {
+                                                    <div class="form-text">@feature.Description</div>
+                                                }
 
                                             }
 
@@ -75,14 +79,18 @@
                                                            group-data-feature-name="@feature.Name"
                                                            group-data-parent-name="@(feature.ParentName ?? "")"
                                                            group-style="margin-left: @(feature.Depth * 25)px"/>
+                                                @if (feature.Description != null)
+                                                {
+                                                    <div class="form-text">@feature.Description</div>
+                                                }
                                             }
 
                                             @if (feature.ValueType is SelectionStringValueType selectType)
                                             {
-                                                <div data-feature-name="@feature.Name" data-parent-name="@(feature.ParentName ?? "")" style="margin-left: @(feature.Depth * 25)px" class="form-group">
-                                                    <label for="@feature.Name">@feature.DisplayName</label>
+                                                <div data-feature-name="@feature.Name" data-parent-name="@(feature.ParentName ?? "")" style="margin-left: @(feature.Depth * 25)px" class="mb-3">
+                                                    <label class="form-label" for="@feature.Name">@feature.DisplayName</label>
 
-                                                    <select id="@feature.Name" name="FeatureGroups[@i].Features[@j].Value" class="custom-select form-control">
+                                                    <select id="@feature.Name" name="FeatureGroups[@i].Features[@j].Value" class="form-select">
                                                         @foreach (var item in selectType.ItemSource.Items)
                                                         {
                                                             if (item.Value == feature.Value)
@@ -95,6 +103,10 @@
                                                             }
                                                         }
                                                     </select>
+                                                    @if (feature.Description != null)
+                                                    {
+                                                        <div class="form-text">@feature.Description</div>
+                                                    }
                                                 </div>
                                             }
 
@@ -112,7 +124,7 @@
         }
         else
         {
-            <abp-modal-body class="ml-4">
+            <abp-modal-body class="ms-4">
                 @L["NoFeatureFoundMessage"]
             </abp-modal-body>
         }
