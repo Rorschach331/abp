@@ -28,14 +28,15 @@ using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.Blazor.Server;
 using Volo.Abp.Identity.EntityFrameworkCore;
-using Volo.Abp.IdentityServer.EntityFrameworkCore;
 using Volo.Abp.Localization;
 using Volo.Abp.Localization.ExceptionHandling;
 using Volo.Abp.Modularity;
+using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.HttpApi;
 using Volo.Abp.PermissionManagement.Identity;
+using Volo.Abp.PermissionManagement.OpenIddict;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.SettingManagement.Blazor.Server;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
@@ -65,14 +66,15 @@ namespace MyCompanyName.MyProjectName;
     // Account module packages
     typeof(AbpAccountApplicationModule),
     typeof(AbpAccountHttpApiModule),
-    typeof(AbpAccountWebIdentityServerModule),
+    typeof(AbpAccountWebOpenIddictModule),
 
     // Identity module packages
     typeof(AbpPermissionManagementDomainIdentityModule),
+    typeof(AbpPermissionManagementDomainOpenIddictModule),
     typeof(AbpIdentityApplicationModule),
     typeof(AbpIdentityHttpApiModule),
     typeof(AbpIdentityEntityFrameworkCoreModule),
-    typeof(AbpIdentityServerEntityFrameworkCoreModule),
+    typeof(AbpOpenIddictEntityFrameworkCoreModule),
     typeof(AbpIdentityBlazorServerModule),
 
     // Audit logging module packages
@@ -115,6 +117,23 @@ public class MyProjectNameModule : AbpModule
                 typeof(MyProjectNameModule).Assembly
             );
         });
+
+		PreConfigure<OpenIddictServerBuilder>(builder =>
+		{
+			// https://documentation.openiddict.com/configuration/token-formats.html#disabling-jwt-access-token-encryption
+			// In production, it is recommended to use two RSA certificates, distinct from the certificate(s) used for HTTPS: one for encryption, one for signing.
+			builder.DisableAccessTokenEncryption();
+		});
+
+		PreConfigure<OpenIddictBuilder>(builder =>
+		{
+			builder.AddValidation(options =>
+			{
+				options.AddAudiences("MyProjectName");
+				options.UseLocalServer();
+				options.UseAspNetCore();
+			});
+		});
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -124,7 +143,7 @@ public class MyProjectNameModule : AbpModule
 
         ConfigureUrls(configuration);
         ConfigureBundles();
-        ConfigureAutoMapper();
+        ConfigureAutoMapper(context);
         ConfigureVirtualFiles(hostingEnvironment);
         ConfigureLocalizationServices();
         ConfigureSwaggerServices(context.Services);
@@ -276,8 +295,9 @@ public class MyProjectNameModule : AbpModule
         });
     }
 
-    private void ConfigureAutoMapper()
+    private void ConfigureAutoMapper(ServiceConfigurationContext context)
     {
+        context.Services.AddAutoMapperObjectMapper<MyProjectNameModule>();
         Configure<AbpAutoMapperOptions>(options =>
         {
             options.AddMaps<MyProjectNameModule>();
@@ -334,7 +354,6 @@ public class MyProjectNameModule : AbpModule
         }
 
         app.UseUnitOfWork();
-        app.UseIdentityServer();
         app.UseAuthorization();
 
         app.UseSwagger();

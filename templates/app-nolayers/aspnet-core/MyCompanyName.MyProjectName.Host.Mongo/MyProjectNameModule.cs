@@ -24,15 +24,16 @@ using Volo.Abp.FeatureManagement;
 using Volo.Abp.FeatureManagement.MongoDB;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.MongoDB;
-using Volo.Abp.IdentityServer.MongoDB;
 using Volo.Abp.Localization;
 using Volo.Abp.Localization.ExceptionHandling;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.OpenIddict.MongoDB;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.PermissionManagement.MongoDB;
 using Volo.Abp.PermissionManagement.HttpApi;
 using Volo.Abp.PermissionManagement.Identity;
+using Volo.Abp.PermissionManagement.OpenIddict;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.SettingManagement.MongoDB;
 using Volo.Abp.Swashbuckle;
@@ -60,14 +61,15 @@ namespace MyCompanyName.MyProjectName;
     // Account module packages
     typeof(AbpAccountApplicationModule),
     typeof(AbpAccountHttpApiModule),
-    typeof(AbpAccountWebIdentityServerModule),
+    typeof(AbpAccountWebOpenIddictModule),
 
     // Identity module packages
     typeof(AbpPermissionManagementDomainIdentityModule),
+    typeof(AbpPermissionManagementDomainOpenIddictModule),
     typeof(AbpIdentityApplicationModule),
     typeof(AbpIdentityHttpApiModule),
     typeof(AbpIdentityMongoDbModule),
-    typeof(AbpIdentityServerMongoDbModule),
+    typeof(AbpOpenIddictMongoDbModule),
 
     // Audit logging module packages
     typeof(AbpAuditLoggingMongoDbModule),
@@ -105,6 +107,23 @@ public class MyProjectNameModule : AbpModule
                 typeof(MyProjectNameResource)
             );
         });
+
+		PreConfigure<OpenIddictServerBuilder>(builder =>
+		{
+			// https://documentation.openiddict.com/configuration/token-formats.html#disabling-jwt-access-token-encryption
+			// In production, it is recommended to use two RSA certificates, distinct from the certificate(s) used for HTTPS: one for encryption, one for signing.
+			builder.DisableAccessTokenEncryption();
+		});
+
+		PreConfigure<OpenIddictBuilder>(builder =>
+		{
+			builder.AddValidation(options =>
+			{
+				options.AddAudiences("MyProjectName");
+				options.UseLocalServer();
+				options.UseAspNetCore();
+			});
+		});
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -115,7 +134,7 @@ public class MyProjectNameModule : AbpModule
         ConfigureBundles();
         ConfigureMultiTenancy();
         ConfigureUrls(configuration);
-        ConfigureAutoMapper();
+        ConfigureAutoMapper(context);
         ConfigureSwagger(context.Services);
         ConfigureAutoApiControllers();
         ConfigureVirtualFiles(hostingEnvironment);
@@ -239,8 +258,9 @@ public class MyProjectNameModule : AbpModule
         );
     }
 
-    private void ConfigureAutoMapper()
+    private void ConfigureAutoMapper(ServiceConfigurationContext context)
     {
+        context.Services.AddAutoMapperObjectMapper<MyProjectNameModule>();
         Configure<AbpAutoMapperOptions>(options =>
         {
             /* Uncomment `validate: true` if you want to enable the Configuration Validation feature.
@@ -329,7 +349,6 @@ public class MyProjectNameModule : AbpModule
         }
 
         app.UseUnitOfWork();
-        app.UseIdentityServer();
         app.UseAuthorization();
 
         app.UseSwagger();
