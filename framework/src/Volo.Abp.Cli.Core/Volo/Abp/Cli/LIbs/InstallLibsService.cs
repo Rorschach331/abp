@@ -54,6 +54,11 @@ public class InstallLibsService : IInstallLibsService, ITransientDependency
             return;
         }
 
+        if (!IsYarnAvailable())
+        {
+            Logger.LogWarning("YARN is not installed, which may cause package inconsistency, please use YARN instead of NPM. visit https://classic.yarnpkg.com/lang/en/docs/install/ and install YARN");
+        }
+
         Logger.LogInformation($"Found {projectPaths.Count} projects.");
         foreach (var projectPath in projectPaths)
         {
@@ -236,13 +241,13 @@ public class InstallLibsService : IInstallLibsService, ITransientDependency
     private void RunNpmInstall(string directory)
     {
         Logger.LogInformation($"Running npm install on {directory}");
-        CmdHelper.RunCmd($"cd {directory} && npm install");
+        CmdHelper.RunCmd($"npm install", directory);
     }
 
     private void RunYarn(string directory)
     {
         Logger.LogInformation($"Running Yarn on {directory}");
-        CmdHelper.RunCmd($"cd {directory} && yarn");
+        CmdHelper.RunCmd($"yarn", directory);
     }
 
     private bool IsNpmInstalled()
@@ -253,17 +258,10 @@ public class InstallLibsService : IInstallLibsService, ITransientDependency
 
     private bool IsYarnAvailable()
     {
-        var output = CmdHelper.RunCmdAndGetOutput("npm list yarn -g").Trim();
-        if (output.Contains("empty"))
-        {
+        var output = CmdHelper.RunCmdAndGetOutput("yarn -v").Trim();
+        if (!SemanticVersion.TryParse(output, out var version)){
             return false;
         }
-
-        if (!SemanticVersion.TryParse(output.Substring(output.IndexOf('@') + 1), out var version))
-        {
-            return false;
-        }
-
         return version > SemanticVersion.Parse("1.20.0");
     }
 }
